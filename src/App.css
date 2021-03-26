@@ -26,6 +26,7 @@ body,html,#root{
 }
 .dtb-cell{
   overflow: hidden;
+  position: relative;
 }
 .dtb-item:hover .dtb-cell{
   background-color: rgba(0, 0, 0, 0.075);
@@ -40,4 +41,15 @@ body,html,#root{
 .dtb-form{
   background-color: rgba(0, 0, 0, 0.03);
   border-bottom: solid 2px #222;
+}
+
+.dtb-items {
+  scroll-behavior: smooth;
+}
+.dtb-cell .fa-action{ position: absolute; right: 2px; top: 2px; visibility: hidden}
+.dtb-cell:hover .fa-action{ visibility: visible; cursor: pointer; background-color: #bbb; border-radius: 3px; padding: 3px;}
+.dtb-cell:hover .fa-action:active{ opacity: 0.8;}
+.dtb-item-active .fa-action{
+  background-color: #fff;
+  color: #222;;
 }
