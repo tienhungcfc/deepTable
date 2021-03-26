@@ -1,0 +1,43 @@
+.DeepTable,.dtb{
+  background-color: transparent;
+}
+body,html,#root{
+  height: 100%;;
+}
+
+.dtb{
+  font-size: 13px;
+  position: relative;
+}
+.dtb-main{
+  overflow-x: scroll;
+}
+.dtb-head{
+  font-weight: 500;
+ 
+}
+
+.dtb-items{ overflow-y: auto; position: relative; }
+.dtb-item,.dtb-form{
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+}
+.dtb-cell{
+  overflow: hidden;
+}
+.dtb-item:hover .dtb-cell{
+  background-color: rgba(0, 0, 0, 0.075);
+
+}
+.dtb-content{
+  height: 80vh;;
+}
+.dtb-cell{
+  align-items: center;
+}
+.dtb-form{
+  background-color: rgba(0, 0, 0, 0.03);
+  border-bottom: solid 2px #222;
+}
