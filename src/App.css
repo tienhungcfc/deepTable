@@ -12,7 +12,7 @@ body,html,#root{
 .dtb-main{
   overflow-x: scroll;
 }
-.dtb-head{
+.dtb-head .dtb-bread{
   font-weight: 500;
  
 }
@@ -62,4 +62,69 @@ body,html,#root{
   opacity: 0.5;
   top: 0;
   transition: all 0.2s;
+}
+.dtb-head{
+  height: 64px;
+}
+.dtb-bread .nav-item.dropdown .nav-link{
+padding: 0;
+}
+.dtb-bread .breadcrumb-item a{
+  text-decoration: none;
+  color: inherit;
+}
+.dtb-deep{
+  position: relative;
+}
+.dtb-deep::before{
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-left: solid 1px #999;
+  width: 1px;
+  content: "";
+  z-index: 1;
+}
+.dtb-count{
+  position: absolute;
+  top:0;
+  left: 5px;
+ 
+  font-size: 10px;
+  background-color: var(--bs-gray);
+  padding: 0 2px;
+  border-radius: 2px ;
+  color: white;
+z-index: 10;
+}
+.modal-header button,.modal-header button:focus{
+  border: none;
+  border-radius: 3px;
+  outline: none;
+}
+.dtb-wrap{
+  position: relative;
+}
+.dtb-loading{
+position: absolute;
+z-index: 11;
+left: 0;
+right: 0;
+top: 10px;
+background-color: var(--bs-yellow) ;
+padding: 0.5rem 1rem;
+border-radius: 3px;
+margin: 0 auto;
+width: 150px;
+text-align: center;
+box-shadow: 0 17px 18px 3px rgb(0 0 0 / 20%);
+font-size: 12px;
+}
+.dtb-noact button,
+.dtb-noact .breadcrumb,
+.dtb-noact .fa-action{
+  pointer-events: none;
+  opacity: .5;
+  cursor: not-allowed;
 }

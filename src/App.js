@@ -4,12 +4,14 @@ import { Demo } from './Common/Demo';
 import { getScrollbarWidth } from './Common/Helper';
 import 'react-perfect-scrollbar/dist/css/styles.css';
 import PerfectScrollbar from 'react-perfect-scrollbar';
-
+import { Nav, NavDropdown, Breadcrumb, Modal } from 'react-bootstrap';
 var data = {
-  Title: 'Nội dung',
-  Items: [],
+
+  loadingText: '',
   Deeps: [
     {
+      title: 'Khóa học',
+      visibled: false,
       props: ['Title', 'VideoLink', 'CertHtml', 'BgImage'],
       freeze: ['Title'],
       active: null,
@@ -33,9 +35,28 @@ var data = {
           BgImage: '',
           ID: 0
         }
-      }
+      },
+      resizes: {
+        //cellName: zise
+      },
+      pgs: {
+        total: 100,
+        pi: 1,
+        ps: 100,
+        pcount: 10
+      },
+      filters: [
+        { name: "from", value: "", type: "datetime" },
+        { name: "to", value: "", type: "datetime" }
+      ],
+      filterInDeep: [
+        { name: "from", value: "", type: "datetime" },
+        { name: "to", value: "", type: "datetime" }
+      ]
     },
     {
+      title: 'Bài học',
+      visibled: false,
       props: ['Title', 'MedalHtml', 'ActivityHtml', 'ID'],
       freeze: ['Title'],
       active: null,
@@ -59,9 +80,28 @@ var data = {
           MedalHtml: '',
           ActivityHtml: ''
         }
-      }
+      },
+      resizes: {
+        //cellName: zise
+      },
+      pgs: {
+        total: 100,
+        pi: 1,
+        ps: 100,
+        pcount: 10
+      },
+      filters: [
+        { name: "from", value: "", type: "datetime" },
+        { name: "to", value: "", type: "datetime" }
+      ],
+      filterInDeep: [
+        { name: "from", value: "", type: "datetime" },
+        { name: "to", value: "", type: "datetime" }
+      ]
     },
     {
+      title: 'Hành động',
+      visibled: false,
       props: ['Title', 'MaxPoint', 'SrcMobile', 'SrcDesktop', 'Images'],
       freeze: ['Title'],
       active: null,
@@ -84,7 +124,24 @@ var data = {
           LessonID: 0,
         }
       },
-      noDeep: true
+      noDeep: true,
+      resizes: {
+        //cellName: zise
+      },
+      pgs: {
+        total: 100,
+        pi: 1,
+        ps: 100,
+        pcount: 10
+      },
+      filters: [
+        { name: "from", value: "", type: "datetime" },
+        { name: "to", value: "", type: "datetime" }
+      ],
+      filterInDeep: [
+        { name: "from", value: "", type: "datetime" },
+        { name: "to", value: "", type: "datetime" }
+      ]
     }
   ],
   Env: {
@@ -95,12 +152,18 @@ var data = {
     cellWidth: 250
   }
 
-
 }
-
+function clone(x) {
+  var z = JSON.parse(JSON.stringify(x));
+  return z;
+}
+var _deep = clone(data.Deeps[0])
+function CreatDeep() {
+  return clone(_deep);
+}
 Demo(data);
 
-if (window.DeepTableCreator) window.DeepTableCreator(data);
+if (window.DeepTableCreator) window.DeepTableCreator(data, { CreatDeep: CreatDeep });
 
 var div;
 function rawText(complexText) {
@@ -113,11 +176,34 @@ function rawText(complexText) {
   return div.innerText;
 }
 function getCellWidth(deep, cellName) {
-  return data.Env.cellWidth;
+  var w = deep.resizes[cellName];
+  if (w) {
+    return Math.max(w, 50);
+  }
+  w = data.Env.cellWidth;
+  switch (cellName) {
+    case '--':
+      w = 150;
+      break;
+    case '-STT-':
+      w = 50;
+      break;
+  }
+  return w;
 }
 function Cell(props) {
 
-  var deep= props.deep;
+  var deep = props.deep;
+
+  function render() {
+    return props.rawText ? props.rawText :
+      props.action ? props.action :
+        (<div className={"text-truncate"}>
+          {
+            rawText(props.text)
+          }
+        </div>)
+  }
 
   return (
     <div
@@ -131,24 +217,28 @@ function Cell(props) {
         flex: "0 0 " + getCellWidth(props.deep, props.cellName) + 'px',
         height: data.Env.cellHeight
       }}
+      title={props.tooltip}
     >
-      {
-        props.action ? props.action :
-          (<div className={"text-truncate"}>
-            {
-              rawText(props.text)
-            }
-          </div>)
-      }
+      <div
+        style={{
+          opacity: props.opacity || 1,
+          width: '100%'
+        }}
+      >
+        {
+          render()
+        }
+      </div>
+
 
       {
-        deep.noDeep ? null: [
+        deep.noDeep ? null : [
           props.godeep && !props.isActive ? <i key={0} className="fa fa-action fa-expand" onClick={e => { props.onGoDeep(); }} aria-hidden="true"></i> : null,
           props.isActive ? <i key={1} className="fa fa-action  fa-compress" onClick={e => { props.onUnActive(); }} aria-hidden="true"></i> : null
         ]
       }
 
-     
+
     </div>
   )
 }
@@ -164,10 +254,8 @@ function Form(props) {
   }
   var cols = deep.edit.props || deep.props;
   return (
-    <div
-      className="dtb-form p-5"
-      style={{ top: props.top, height: props.height }}
-    >
+    <div className="dtb-form p-5"
+      style={{ top: props.top, height: props.height }}>
       <div style={{ maxHeight: "100%" }} >
         <div className="bg-white  h-100 rounded rounded-3" style={{ maxWidth: '90%', width: 600, margin: "0 auto" }}>
           <div className="px-5 py-3">
@@ -233,7 +321,8 @@ function Deep(props) {
 
   var scrollH = items.length * data.Env.cellHeight;
   var adjForForm = 0;
-  function form(x, action, xIndex) {
+
+  function setForm(x, action, xIndex) {
     if (action === 'cancel') {
       deep.edit.item = null;
       deep.edit.action = '';
@@ -244,14 +333,13 @@ function Deep(props) {
       el.current.querySelector('.ps').scrollTop = top;
       setScrollTop(top);
     }
-
     setRefresh(refresh + 1);
   }
 
   function addNew() {
     var x = deep.newItem();
     deep.items.splice(0, 0, x);
-    form(x, 'edit', 0);
+    setForm(x, 'edit', 0);
   }
 
 
@@ -262,9 +350,10 @@ function Deep(props) {
       flex = getCellWidth(deep, cn);
     } else {
       deep.props.forEach(col => {
-        flex+= getCellWidth(deep,col);
+        flex += getCellWidth(deep, col);
       });
-      flex+= getCellWidth(deep,'--');
+      flex += getCellWidth(deep, '--');
+      flex += getCellWidth(deep, '-STT-');
     }
     var s = {
       flexGrow: 0,
@@ -277,21 +366,38 @@ function Deep(props) {
 
   return (
     <div
-
+      className="dtb-deep d-flex  flex-column "
       style={styleDeep()}
-      className="dtb-deep d-flex  flex-column">
+    >
+      <div className="dtb-count" title="Số dòng">{deep.items.length}</div>
       <div className="dtb-props d-flex border border-top-0 border-start-0 border-end-0">
         {
+          //STT
+          deep.active ? null :
+            <Cell
+              key={-2}
+              center={true}
+              deep={deep}
+              cellName={"-STT-"}
+              rawText={"STT"}
+              border={true}
+              head={true}
+              opacity={.5}
+            >
+            </Cell>
+        }
+        {
+          //props
           cols.map((p, pIndex) => {
             return <Cell key={pIndex} deep={deep} cellName={p} text={deep.dictionary[p] || p} first={pIndex === 0} head={true} ></Cell>
           })
         }
         {
+          //action
           deep.active ? null :
             <Cell
               key={-1}
               center={true}
-              width={150}
               deep={deep}
               cellName={"--"}
               action={
@@ -312,7 +418,7 @@ function Deep(props) {
         ref={el}
 
       >
-        <PerfectScrollbar  onScroll={(e) => { setScrollTop(e.target.scrollTop) }}>
+        <PerfectScrollbar onScroll={(e) => { setScrollTop(e.target.scrollTop) }}>
           <div
             className="position-relative"
             style={{ height: items.length * data.Env.cellHeight }}>
@@ -327,7 +433,7 @@ function Deep(props) {
 
                 var top = xIndex * data.Env.cellHeight + adjForForm;
 
-
+                //item props
                 return (
                   [
                     <div
@@ -338,6 +444,23 @@ function Deep(props) {
                       }}
                     >
                       {
+                        //STT
+                        deep.active ? null :
+                          <Cell
+                            key={-2}
+                            center={true}
+                            deep={deep}
+                            cellName={"-STT-"}
+                            rawText={xIndex + 1}
+                            tooltip={(xIndex + 1) + '/' + deep.items.length}
+                            border={true}
+                            head={true}
+                            opacity={.5}
+                          >
+                          </Cell>
+                      }
+                      {
+                        //props
                         cols.map((p, pIndex) => {
                           return <Cell
                             key={pIndex}
@@ -349,27 +472,28 @@ function Deep(props) {
                             isActive={deep.active === x}
                             onGoDeep={e => { deep.active = x; setRefresh(refresh + 1); props.onChange(); }}
                             onUnActive={e => { deep.active = null; setRefresh(refresh + 1); props.onChange() }}
+
                           >
 
                           </Cell>
                         })
                       }
                       {
+                        //action
                         deep.active ? null :
                           <Cell
                             key={-1}
-                            width={150}
                             deep={deep}
                             cellName={"--"}
                             action={
                               x === deep.edit.item ?
                                 [
-                                  <button key={0} className="btn btn-light btn-sm py-0 me-2" title="Hủy" onClick={e => { form(x, 'cancel', xIndex) }}><i className="fa fa-times"></i></button>
+                                  <button key={0} className="btn btn-light btn-sm py-0 me-2" title="Hủy" onClick={e => { setForm(x, 'cancel', xIndex) }}><i className="fa fa-times"></i></button>
                                 ]
                                 :
                                 [
-                                  <button key={0} className="btn btn-light btn-sm py-0 me-2" title="Sửa" onClick={e => { form(x, 'edit', xIndex) }}><i className="fa fa-edit"></i></button>,
-                                  <button key={1} className="btn btn-light btn-sm py-0" title="Xóa" onClick={e => { form(x, 'delete', xIndex) }}><i className="fa fa-trash"></i></button>
+                                  <button key={0} className="btn btn-light btn-sm py-0 me-2" title="Sửa" onClick={e => { setForm(x, 'edit', xIndex) }}><i className="fa fa-edit"></i></button>,
+                                  <button key={1} className="btn btn-light btn-sm py-0" title="Xóa" onClick={e => { setForm(x, 'delete', xIndex) }}><i className="fa fa-trash"></i></button>
                                 ]
                             }
                             border={true} head={true} ></Cell>
@@ -381,7 +505,7 @@ function Deep(props) {
                         deep={deep}
                         top={(xIndex + 1) * data.Env.cellHeight}
                         height={data.Env.contentHeight}
-                        onCancel={e => { form(null, 'cancel') }}
+                        onCancel={e => { setForm(null, 'cancel') }}
                       ></Form> : null
                   ]
                 )
@@ -401,34 +525,173 @@ function Deep(props) {
 }
 
 
+function PagingSetting(props) {
+  const [ps, setPs] = useState(props.ps);
+  const [pi, setPi] = useState(props.pi);
+  var arr = [];
+  for (var i = 1; i <= props.pcount; i++) {
+    arr.push(i);
+  }
+  return (
+    <div>
+      <label className="mb-1 text-muted">Trang:</label>
+      <div>
+        {
+          arr.map(i => {
+            return <button key={i} onClick={e => { setPi(i) ; setTimeout(()=>{props.onPiClick && props.onPiClick(i)},100) }} style={{ fontSize: 11 }} className={"btn  btn-sm m-1 " + (i === pi ? "btn-success" : "btn-light")}>{i}</button>
+          })
+        }
+      </div>
+      <div className="form-group">
+        <label className="mb-1 text-muted">Số dòng trên một trang</label>
+        <input className="form-control" type="number" value={ps} onChange={e => { setPs(parseInt(e.target.value)) }}></input>
+      </div>
+    </div>
+  )
+}
 
 function App() {
 
   var $el = useRef();
   const [refresh, setRefresh] = useState(0);
+  const [startDeepIndex, setStartDeepIndex] = useState(0);
+  const [modelShow, setModelShow] = useState(false);
+  const [modelOpts, setModelOpts] = useState({ title: "", buttons: null, body: null });
+
+  var crDeep = null;
+  function resetActive() {
+    data.Deeps.forEach(function (d, dIndex) {
+      d.active = null;
+    })
+  }
+
+  function goNav(dir) {
+
+  }
+  function showFilter(inDeep) {
+    modelOpts.title = `Bộ lọc của "${crDeep.title}"`;
+    modelOpts.buttons = [
+      <button className="btn btn-light" onClick={e => setModelShow(false)}>Hủy</button>,
+      <button className="btn btn-success">Thực hiện</button>
+    ];
+
+    modelOpts.body = (
+      <div>
+
+      </div>
+    );
+
+    setModelOpts(modelOpts);
+    setModelShow(true);
+  }
+  function loadData() {
+    setRefresh(refresh + 1);
+    console.log(crDeep.pgs);
+  }
+  function showPgs(inDeep) {
+    modelOpts.title = `Phân trang của "${crDeep.title}"`;
+    var pgs = clone(crDeep.pgs);
+    modelOpts.body = <PagingSetting ps={pgs.ps} pcount={pgs.pcount} pi={pgs.pi} onPiClick={pi => { crDeep.pgs.pi = pi; setModelShow(false); loadData(); }}></PagingSetting>;
+
+    setModelOpts(modelOpts);
+    setModelShow(true);
+  }
 
   var pathActive = true;
+  var breadcrumb = [];
+  data.Deeps.forEach(function (d, dIndex) {
+    d.visibled = false;
+    if (dIndex < startDeepIndex) return;
+    if (!pathActive) return null;
+    d.visibled = true;
+    crDeep = d;
+    pathActive = d.active ? pathActive : false;
+    breadcrumb.push({ title: d.title, count: d.items.length });
+  })
+
   return (
-    <div className="DeepTable dtb d-flex- flex-grow-1 h-100 mx-3">
-      <div className="dtb-inner d-flex flex-grow-1 flex-column h-100">
-        <h1>{data.Title}</h1>
-        <div ref={$el} className="dtb-main d-flex flex-grow-1 flex-column border border-top-0 mb-3">
-          <div className="dtb-content d-flex flex-grow-1" style={{ height: data.Env.contentHeight }}>
-            {
-              data.Deeps.map((d, dIndex) => {
-                if (!pathActive) return null;
-                pathActive = d.active ? pathActive : false;
-                return (
-                  <Deep deep={d} key={dIndex} up={data.Deeps[dIndex - 1]} onChange={e => { setRefresh(refresh + 1) }}></Deep>
-                )
-              })
-            }
+    <div className={"dtb-wrap h-100" + (data.loadingText ? " dtb-noact" : "")} >
+      <div className="DeepTable dtb d-flex- flex-grow-1 h-100 mx-3">
+        <div className="dtb-inner d-flex flex-grow-1 flex-column h-100">
+          <div className="dtb-head align-items-center d-flex justify-content-between">
+            <nav aria-label="breadcrumb">
+              <Breadcrumb className="dtb-bread" >
+                {
+                  breadcrumb.map((br, brIndex) => {
+                    if (brIndex === 0) {
+                      return (
+                        <NavDropdown className="breadcrumb-item" key={0} title={br.title} >
+                          {
+                            data.Deeps.map((x, i) => {
+                              return <NavDropdown.Item key={i}  href="" onClick={e => { setStartDeepIndex(i); resetActive() }}>{x.title}</NavDropdown.Item>
+                            })
+                          }
+                        </NavDropdown>
+                      )
+                    }
+                    return (
+                      <Breadcrumb.Item key={brIndex} >{br.title}</Breadcrumb.Item>
+                    )
+                  })
+                }
+              </Breadcrumb>
+            </nav>
+            <div className="dtb-control text-muted d-flex dtb-pgs align-items-center">
+              <span>
+                Hiện thị {crDeep.pgs.ps * (crDeep.pgs.pi - 1) + 1} - {crDeep.pgs.ps * (crDeep.pgs.pi - 1) + crDeep.items.length} dòng/ Tổng:{crDeep.pgs.total}.
+              </span>
+              <span className="d-flex dtb-pgs-nav ms-3 btn-group btn-group-sm" >
+                <button className="btn btn-sm btn-light" disabled={true} onClick={e => goNav(-1)}><i className="fa fa-angle-left" aria-hidden="true"></i></button>
+                <button className="btn btn-sm btn-light" onClick={e => showPgs(breadcrumb.length > 0)}><i className="fa fa-ellipsis-h" aria-hidden="true"></i></button>
+                <button className="btn btn-sm btn-light" disabled={true} onClick={e => goNav(1)}><i className="fa fa-angle-right" aria-hidden="true"></i></button>
+                <button className="btn btn-sm btn-light" onClick={e => showFilter(breadcrumb.length > 0)}><i className="fa fa-filter" aria-hidden="true"></i></button>
+              </span>
+            </div>
           </div>
-
-
+          <div ref={$el} className="dtb-main d-flex flex-grow-1 flex-column border border-top-0 border-start-0 mb-3">
+            <div className="dtb-content d-flex flex-grow-1" style={{ height: data.Env.contentHeight }}>
+              {
+                data.Deeps.map((d, dIndex) => {
+                  if (!d.visibled) return null;
+                  return (
+                    <Deep deep={d} key={dIndex} up={data.Deeps[dIndex - 1]} onChange={e => { setRefresh(refresh + 1) }}></Deep>
+                  )
+                })
+              }
+            </div>
+          </div>
         </div>
       </div>
+      <Modal show={modelShow} onHide={e => { setModelShow(false) }}>
+        <Modal.Header closeButton>
+          <Modal.Title>
+            {
+              modelOpts.title
+            }
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {
+            modelOpts.body
+          }
+        </Modal.Body>
+        <Modal.Footer>
+          {
+            modelOpts.buttons
+          }
+        </Modal.Footer>
+      </Modal>
+      {
+        data.loadingText ?
+          <div className="dtb-loading">
+            <div class="spinner-grow text-light spinner-grow-sm me-1" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            {data.loadingText}
+          </div> : null
+      }
     </div>
+
   );
 }
 
