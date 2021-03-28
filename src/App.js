@@ -1,148 +1,86 @@
-import { useRef, useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './App.css';
 import { Demo } from './Common/Demo';
 import { getScrollbarWidth } from './Common/Helper';
 import 'react-perfect-scrollbar/dist/css/styles.css';
 import PerfectScrollbar from 'react-perfect-scrollbar';
-import { Nav, NavDropdown, Breadcrumb, Modal } from 'react-bootstrap';
-var data = {
+import { NavDropdown, Breadcrumb, Modal } from 'react-bootstrap';
+import Datetime from 'react-datetime';
+import "react-datetime/css/react-datetime.css";
+import moment from 'moment';
+import 'moment/locale/vi';
+import { CKEditor } from '@ckeditor/ckeditor5-react';
+import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+function CreateDeep(fn) {
+  var x = {
+    title: 'Title 1',
+    visibled: false,
+    props: ['Title'],
+    freeze: ['Title'],
+    active: null,
+    items: [],
+    dictionary: {
+      //prop:text
+    },
+    edit: {
+      item: null,
+      action: '',
+      title: 'Chi tiết',
+      props: [
+        //{name, type,}
+        { name: "Title", type: "text" }
+      ],
+      propsInDeep: [
+        //{name, type,}
+        { name: "Title", type: "text" }
+      ],
 
+    },
+    newItem() {
+      return {
+        Title: '',
+        ID: 0
+      }
+    },
+    noDeep: true,
+    onParent: () => { },
+    resizes: {
+      //cellName: zise
+    },
+    pgs: {
+      total: 0,
+      pi: 1,
+      ps: 100,
+      pcount: 0
+    },
+    server: {
+      update: '',
+      delete: '',
+      get: ''
+    },
+    filter: [
+      { name: "key", value: "", text: "Từ khóa" },
+      { name: "from", value: "", type: "datetime", text: "Từ ngày" },
+      { name: "to", value: "", type: "datetime", text: "Đến ngày" }
+    ],
+    filterInDeep: [
+      { name: "key", value: "", text: "Từ khóa" },
+      { name: "from", value: "", type: "datetime", text: "Từ ngày" },
+      { name: "to", value: "", type: "datetime", text: "Đến ngày" }
+    ]
+  };
+
+  if (fn) fn(x);
+  return x;
+}
+
+var data = {
   loadingText: '',
+  server: '',
   Deeps: [
-    {
-      title: 'Khóa học',
-      visibled: false,
-      props: ['Title', 'VideoLink', 'CertHtml', 'BgImage'],
-      freeze: ['Title'],
-      active: null,
-      items: [],
-      dictionary: {
-        'Title': 'Khóa học',
-        'VideoLink': 'Video Giới thiệu',
-        'CertHtml': 'Chứng chỉ',
-        'BgImage': 'Ảnh nền'
-      },
-      edit: {
-        item: null,
-        action: '',
-        title: 'Chi tiết khóa học'
-      },
-      newItem() {
-        return {
-          Title: 'Khóa học ',
-          VideoLink: '',
-          CertHtml: '',
-          BgImage: '',
-          ID: 0
-        }
-      },
-      resizes: {
-        //cellName: zise
-      },
-      pgs: {
-        total: 100,
-        pi: 1,
-        ps: 100,
-        pcount: 10
-      },
-      filters: [
-        { name: "from", value: "", type: "datetime" },
-        { name: "to", value: "", type: "datetime" }
-      ],
-      filterInDeep: [
-        { name: "from", value: "", type: "datetime" },
-        { name: "to", value: "", type: "datetime" }
-      ]
-    },
-    {
-      title: 'Bài học',
-      visibled: false,
-      props: ['Title', 'MedalHtml', 'ActivityHtml', 'ID'],
-      freeze: ['Title'],
-      active: null,
-      items: [],
-      dictionary: {
-        'Title': 'Bài học',
-      },
-      onParent(pr, item) {
-        return item.CourseID === pr.ID;
-      },
-      edit: {
-        item: null,
-        action: '',
-        title: 'Chi tiết Bài học'
-      },
-      newItem() {
-        return {
-          Title: 'Bài học',
-          ID: 0,
-          CourseID: 0,
-          MedalHtml: '',
-          ActivityHtml: ''
-        }
-      },
-      resizes: {
-        //cellName: zise
-      },
-      pgs: {
-        total: 100,
-        pi: 1,
-        ps: 100,
-        pcount: 10
-      },
-      filters: [
-        { name: "from", value: "", type: "datetime" },
-        { name: "to", value: "", type: "datetime" }
-      ],
-      filterInDeep: [
-        { name: "from", value: "", type: "datetime" },
-        { name: "to", value: "", type: "datetime" }
-      ]
-    },
-    {
-      title: 'Hành động',
-      visibled: false,
-      props: ['Title', 'MaxPoint', 'SrcMobile', 'SrcDesktop', 'Images'],
-      freeze: ['Title'],
-      active: null,
-      items: [],
-      dictionary: {
-        'Title': 'Hành động',
-      },
-      onParent(pr, item) {
-        return item.LessonID === pr.ID;
-      },
-      edit: {
-        item: null,
-        action: '',
-        title: 'Chi tiết hoạt động'
-      },
-      newItem() {
-        return {
-          Title: 'Hoạt động',
-          ID: 0,
-          LessonID: 0,
-        }
-      },
-      noDeep: true,
-      resizes: {
-        //cellName: zise
-      },
-      pgs: {
-        total: 100,
-        pi: 1,
-        ps: 100,
-        pcount: 10
-      },
-      filters: [
-        { name: "from", value: "", type: "datetime" },
-        { name: "to", value: "", type: "datetime" }
-      ],
-      filterInDeep: [
-        { name: "from", value: "", type: "datetime" },
-        { name: "to", value: "", type: "datetime" }
-      ]
-    }
+    CreateDeep(),
+    CreateDeep(),
+    CreateDeep()
   ],
   Env: {
     width: 250,
@@ -150,20 +88,19 @@ var data = {
     contentHeight: 0.8 * window.innerHeight,
     cellHeight: 36,
     cellWidth: 250
-  }
+  },
+  firstLoad: false
 
 }
 function clone(x) {
   var z = JSON.parse(JSON.stringify(x));
   return z;
 }
-var _deep = clone(data.Deeps[0])
-function CreatDeep() {
-  return clone(_deep);
-}
-Demo(data);
 
-if (window.DeepTableCreator) window.DeepTableCreator(data, { CreatDeep: CreatDeep });
+if (window.location.href.indexOf('localhost:3000') > -1)
+  Demo(data);
+
+if (window.DeepTableCreator) window.DeepTableCreator(data, { CreateDeep: CreateDeep });
 
 var div;
 function rawText(complexText) {
@@ -187,6 +124,8 @@ function getCellWidth(deep, cellName) {
       break;
     case '-STT-':
       w = 50;
+      break;
+    default:
       break;
   }
   return w;
@@ -243,16 +182,114 @@ function Cell(props) {
   )
 }
 
-function Form(props) {
+function fe(url, opts) {
+  return fetch(url, opts).then(rs => {
+    if (rs.ok) return rs.json(); else throw new Error("Network fail!");
+  }).then(rs => {
+    if (rs.error) throw rs.error;
+    else {
+      return Promise.resolve(rs);
+    }
+  }).catch(e => {
+    alert(e);
+  })
+}
+
+var inputIndex = 0;
+function _2(v) {
+  return v < 10 ? '0' + v : v;
+}
+function Input(props) {
+  var _eq = false;
+  function eq(a, b) {
+    if (_eq) return false;
+    _eq = a === b;
+    return _eq;
+  }
+  var i = inputIndex++;
+  var ps = {
+    onChange(e) {
+      var v = '';
+      if (e.target) {
+        v = e.target.value;
+      } else {
+        if (e instanceof moment) {
+          //console.log('date', e._d);
+          v = _2(e._d.getDate()) + '/' + _2(e._d.getMonth() + 1) + '/' + e._d.getFullYear();
+        }
+      }
+      props.onChange && props.onChange(v);
+
+    },
+    value: props.value,
+    id: "input--" + i,
+    className: ["datetime","file"].indexOf(props.type) > -1 ? "" : "form-control"
+  }
+  return (
+    <div className="form-group mb-3">
+      <label className="mb-1 text-muted" htmlFor={"input--" + i}>{props.label}</label>
+      {
+        !eq(props.type, 'editor') ? null : <CKEditor editor={ClassicEditor} data={props.value} onChange={(o, editor) => { props.onChange && props.onChange(editor.getData()); }} />
+      }
+      {
+        !eq(props.type, 'text') ? null : <input type="text"  {...ps}></input>
+      }
+      {
+        !eq(props.type, 'file') ? null : <div><input type="file"  {...ps}></input></div>
+      }
+      {
+        !eq(props.type, 'datetime') ? null : <Datetime locale="vi" dateFormat="DD/MM/yyyy" timeFormat={false} {...ps} />
+      }
+
+      {
+        _eq ? null : <textarea {...ps}></textarea>
+      }
+    </div>
+  )
+}
+
+function FormEdit(props) {
   const [refresh, setRefresh] = useState(0);
   var deep = props.deep;
   var x = deep.edit.item;
 
+  //console.log('inDeep', props.inDeep);
 
-  if (!x._edit) {
-    x._edit = JSON.parse(JSON.stringify(x));
+
+  function doUpdate() {
+    data.loadingText = x.ID ? 'Cập nhật...' : 'Thêm mới...';
+    Refresh();
+    fe(data.server + deep.server.update, {
+      method: 'POST',
+      body: JSON.stringify(x._edit)
+    }).then(rs => {
+      // console.log(rs);
+      // alert('');
+      data.loadingText = 'done';
+      Refresh();
+      props.reload && props.reload();
+    })
+
   }
-  var cols = deep.edit.props || deep.props;
+  function doDelete() {
+    data.loadingText = 'Xóa...';
+    Refresh();
+    fe(data.server + deep.server.delete, {
+      method: 'POST',
+      body: JSON.stringify({ ID: x._edit.ID })
+    }).then(rs => {
+      // console.log(rs);
+      // alert('');
+      data.loadingText = 'done';
+      Refresh();
+      props.reload && props.reload();
+    })
+
+  }
+  if (!x._edit) {
+    x._edit = clone(x);
+  }
+  var propsForm = props.inDeep ? deep.edit.propsIndeep : deep.edit.props;
   return (
     <div className="dtb-form p-5"
       style={{ top: props.top, height: props.height }}>
@@ -265,13 +302,19 @@ function Form(props) {
             <PerfectScrollbar>
               <div>
                 {
-                  cols.map((p, pIndex) => {
-                    return (
-                      <div key={pIndex} className="form-group mb-3">
-                        <label className="mb-1 text-muted" htmlFor={pIndex + "-input"}>{deep.dictionary[p] || p}</label>
-                        <textarea className="form-control" id={pIndex + "-input"} onChange={e => { x._edit[p] = e.target.value; setRefresh(refresh + 1) }} value={x._edit[p]}></textarea>
-                      </div>
-                    )
+                  propsForm.map((p, pIndex) => {
+
+                    var ps = {
+                      onChange(e) {
+                        x._edit[p.name] = e;
+                        setRefresh(refresh + 1)
+                      },
+                      value: x._edit[p.name],
+                      label: p.text || deep.dictionary[p.name] || p.name,
+                      type: p.type
+                    }
+                    return <Input key={pIndex} {...ps}></Input>
+
                   })
                 }
               </div>
@@ -282,8 +325,8 @@ function Form(props) {
             <button className="btn btn-secondary" onClick={e => { props.onCancel() }}>Hủy</button>
             {
               deep.edit.action === "delete" ?
-                <button className="btn btn-danger">Xóa</button> :
-                <button className="btn btn-success">
+                <button className="btn btn-danger" onClick={e => doDelete()}>Xóa</button> :
+                <button className="btn btn-success" onClick={e => doUpdate()}>
                   {
                     x._edit.ID ? "Cập nhật" : "Thêm mới"
                   }
@@ -500,13 +543,17 @@ function Deep(props) {
                       }
                     </div>,
                     x === deep.edit.item ?
-                      <Form
+                      <FormEdit
                         key={xIndex + "-1"}
                         deep={deep}
                         top={(xIndex + 1) * data.Env.cellHeight}
                         height={data.Env.contentHeight}
                         onCancel={e => { setForm(null, 'cancel') }}
-                      ></Form> : null
+                        inDeep={props.inDeep}
+                        reload={e => {
+                          props.reload && props.reload();
+                        }}
+                      ></FormEdit> : null
                   ]
                 )
               })
@@ -538,17 +585,71 @@ function PagingSetting(props) {
       <div>
         {
           arr.map(i => {
-            return <button key={i} onClick={e => { setPi(i) ; setTimeout(()=>{props.onPiClick && props.onPiClick(i)},100) }} style={{ fontSize: 11 }} className={"btn  btn-sm m-1 " + (i === pi ? "btn-success" : "btn-light")}>{i}</button>
+            return <button key={i} onClick={e => { setPi(i); setTimeout(() => { props.onPiClick && props.onPiClick(i) }, 50) }} style={{ fontSize: 11 }} className={"btn  btn-sm m-1 " + (i === pi ? "btn-success" : "btn-light")}>{i}</button>
           })
         }
       </div>
       <div className="form-group">
         <label className="mb-1 text-muted">Số dòng trên một trang</label>
-        <input className="form-control" type="number" value={ps} onChange={e => { setPs(parseInt(e.target.value)) }}></input>
+        <div className="input-group">
+          <input className="form-control" type="number" value={ps} onChange={e => { setPs(parseInt(e.target.value)) }}></input>
+          <button className="btn btn-light" onClick={e => { props.onPsChange && props.onPsChange(ps) }}>Thay đổi</button>
+        </div>
+
       </div>
     </div>
   )
 }
+
+function RenderFilter(props) {
+  var deep = props.deep;
+  var inDeep = props.inDeep;
+  var ft = inDeep ? deep.filterInDeep : deep.filter;
+
+  if (!deep.resetFilter) {
+    deep.resetFilter = {
+      filterInDeep: clone(deep.filterInDeep),
+      filter: clone(deep.filter),
+    }
+  }
+  const [refresh, setRefresh] = useState(0);
+
+
+
+
+  return (
+    <div>
+      {
+        ft.map((p, pIndex) => {
+          var ps = {
+            onChange(e) {
+              p.value = e;
+              setRefresh(refresh + 1);
+            },
+            value: p.value,
+            label: p.text || deep.dictionary[p.name] || p.name,
+            type: p.type
+          }
+          return <Input key={pIndex} {...ps}></Input>
+        })
+      }
+      <div className="d-flex flex-row-reverse">
+        <button className="btn btn-success" onClick={e => {
+          props.onFilter && props.onFilter();
+        }}>Thực hiện</button>
+
+        <button className="btn btn-light me-2" onClick={e => {
+          deep.filterInDeep = clone(deep.resetFilter.filterInDeep);
+          deep.filter = clone(deep.resetFilter.filter);
+          setRefresh(refresh + 1);
+        }}>Làm lại</button>
+      </div>
+    </div>
+  );
+
+}
+
+var Refresh;
 
 function App() {
 
@@ -558,6 +659,7 @@ function App() {
   const [modelShow, setModelShow] = useState(false);
   const [modelOpts, setModelOpts] = useState({ title: "", buttons: null, body: null });
 
+
   var crDeep = null;
   function resetActive() {
     data.Deeps.forEach(function (d, dIndex) {
@@ -565,33 +667,76 @@ function App() {
     })
   }
 
-  function goNav(dir) {
+  Refresh = (v) => {
+    setRefresh(refresh + 1);
+  }
+  function loadData(deep, pi) {
+    data.loadingText = 'Loading...';
+    if (pi) deep.pgs.pi = pi;
+    setRefresh(refresh + 1);
+    var filter = {};
+
+    var inDeep = data.Deeps.indexOf(deep) !== startDeepIndex;
+    deep[inDeep ? "filterInDeep" : "filter"].forEach(function (f) {
+      filter[f.name] = f.value
+    })
+
+    fe(data.server + deep.server.get, {
+      method: 'POST',
+      body: JSON.stringify({
+        filter: filter,
+        pi: deep.pgs.pi,
+        ps: deep.pgs.ps,
+      })
+    }).then(rs => {
+      //console.log('rs',rs);
+      data.loadingText = '';
+      deep.items = rs.data;
+      deep.pgs.pi = rs.other.pi;
+      deep.pgs.ps = rs.other.ps;
+      deep.pgs.pcount = rs.other.pcount;
+      deep.pgs.total = rs.other.total;
+
+      Refresh();
+
+    })
+
 
   }
-  function showFilter(inDeep) {
+  function goNav(dir) {
+
+    var pi = crDeep.pgs.pi;
+    pi += dir;
+    pi = Math.max(pi, 0);
+    pi = Math.min(pi, crDeep.pgs.pcount);
+    loadData(crDeep, pi);
+
+  }
+  function showFilter() {
+
     modelOpts.title = `Bộ lọc của "${crDeep.title}"`;
-    modelOpts.buttons = [
-      <button className="btn btn-light" onClick={e => setModelShow(false)}>Hủy</button>,
-      <button className="btn btn-success">Thực hiện</button>
-    ];
+    modelOpts.buttons = null;
 
-    modelOpts.body = (
-      <div>
 
-      </div>
-    );
-
+    modelOpts.body = <RenderFilter
+      deep={crDeep}
+      inDeep={data.Deeps.indexOf(crDeep) !== startDeepIndex}
+      onFilter={e => { loadData(crDeep, 1) }}
+    ></RenderFilter>
     setModelOpts(modelOpts);
     setModelShow(true);
   }
-  function loadData() {
-    setRefresh(refresh + 1);
-    console.log(crDeep.pgs);
-  }
-  function showPgs(inDeep) {
+
+  function showPgs() {
     modelOpts.title = `Phân trang của "${crDeep.title}"`;
     var pgs = clone(crDeep.pgs);
-    modelOpts.body = <PagingSetting ps={pgs.ps} pcount={pgs.pcount} pi={pgs.pi} onPiClick={pi => { crDeep.pgs.pi = pi; setModelShow(false); loadData(); }}></PagingSetting>;
+    modelOpts.body = <PagingSetting
+      ps={pgs.ps}
+      pcount={pgs.pcount}
+      pi={pgs.pi}
+      onPiClick={pi => { crDeep.pgs.pi = pi; setModelShow(false); loadData(crDeep); }}
+      onPsChange={ps => { crDeep.pgs.ps = ps; setModelShow(false); loadData(crDeep); }}
+    ></PagingSetting>;
 
     setModelOpts(modelOpts);
     setModelShow(true);
@@ -609,8 +754,38 @@ function App() {
     breadcrumb.push({ title: d.title, count: d.items.length });
   })
 
+
+  useEffect(() => {
+    if (!data.firstLoad) {
+      data.firstLoad = true;
+      loadData(data.Deeps[0], 1);
+    }
+  })
+
+  function countFilter() {
+    var count = 0;
+    var inDeep = data.Deeps.indexOf(crDeep) !== startDeepIndex;
+    var n = inDeep ? 'filterInDeep' : 'filter';
+    if (crDeep.resetFilter) {
+      crDeep.resetFilter[n].forEach(function (f1) {
+        crDeep[n].forEach(function (f2) {
+          if (f1.name === f2.name) {
+            count += f1.value !== f2.value ? 1 : 0;
+          }
+        })
+      })
+    }
+    return count;
+  }
   return (
-    <div className={"dtb-wrap h-100" + (data.loadingText ? " dtb-noact" : "")} >
+    <div
+      onClick={e => {
+        if (data.loadingText === 'done') {
+          data.loadingText = '';
+          setRefresh(refresh + 1);
+        }
+      }}
+      className={"dtb-wrap h-100" + (data.loadingText && data.loadingText !== 'done' ? " dtb-noact" : "")} >
       <div className="DeepTable dtb d-flex- flex-grow-1 h-100 mx-3">
         <div className="dtb-inner d-flex flex-grow-1 flex-column h-100">
           <div className="dtb-head align-items-center d-flex justify-content-between">
@@ -623,7 +798,7 @@ function App() {
                         <NavDropdown className="breadcrumb-item" key={0} title={br.title} >
                           {
                             data.Deeps.map((x, i) => {
-                              return <NavDropdown.Item key={i}  href="" onClick={e => { setStartDeepIndex(i); resetActive() }}>{x.title}</NavDropdown.Item>
+                              return <NavDropdown.Item key={i} href="" onClick={e => { setStartDeepIndex(i); resetActive() }}>{x.title}</NavDropdown.Item>
                             })
                           }
                         </NavDropdown>
@@ -641,10 +816,13 @@ function App() {
                 Hiện thị {crDeep.pgs.ps * (crDeep.pgs.pi - 1) + 1} - {crDeep.pgs.ps * (crDeep.pgs.pi - 1) + crDeep.items.length} dòng/ Tổng:{crDeep.pgs.total}.
               </span>
               <span className="d-flex dtb-pgs-nav ms-3 btn-group btn-group-sm" >
-                <button className="btn btn-sm btn-light" disabled={true} onClick={e => goNav(-1)}><i className="fa fa-angle-left" aria-hidden="true"></i></button>
-                <button className="btn btn-sm btn-light" onClick={e => showPgs(breadcrumb.length > 0)}><i className="fa fa-ellipsis-h" aria-hidden="true"></i></button>
-                <button className="btn btn-sm btn-light" disabled={true} onClick={e => goNav(1)}><i className="fa fa-angle-right" aria-hidden="true"></i></button>
-                <button className="btn btn-sm btn-light" onClick={e => showFilter(breadcrumb.length > 0)}><i className="fa fa-filter" aria-hidden="true"></i></button>
+                <button className="btn btn-sm btn-light" disabled={crDeep.pgs.pi === 1} onClick={e => goNav(-1)}><i className="fa fa-angle-left" aria-hidden="true"></i></button>
+                <button className="btn btn-sm btn-light" onClick={e => showPgs()}><i className="fa fa-ellipsis-h" aria-hidden="true"></i></button>
+                <button className="btn btn-sm btn-light" disabled={crDeep.pgs.pi === crDeep.pgs.pcount} onClick={e => goNav(1)}><i className="fa fa-angle-right" aria-hidden="true"></i></button>
+                <button className="btn btn-sm btn-light" onClick={e => showFilter()}>
+                  <i className="fa fa-filter" aria-hidden="true"></i>
+                  <span data-count={countFilter()}></span>
+                </button>
               </span>
             </div>
           </div>
@@ -654,7 +832,16 @@ function App() {
                 data.Deeps.map((d, dIndex) => {
                   if (!d.visibled) return null;
                   return (
-                    <Deep deep={d} key={dIndex} up={data.Deeps[dIndex - 1]} onChange={e => { setRefresh(refresh + 1) }}></Deep>
+                    <Deep
+                      deep={d}
+                      inDeep={dIndex !== startDeepIndex}
+                      key={dIndex}
+                      up={data.Deeps[dIndex - 1]}
+                      onChange={e => { setRefresh(refresh + 1) }}
+                      reload={e => {
+                        loadData(d, 1)
+                      }}
+                    ></Deep>
                   )
                 })
               }
@@ -675,19 +862,30 @@ function App() {
             modelOpts.body
           }
         </Modal.Body>
-        <Modal.Footer>
-          {
-            modelOpts.buttons
-          }
-        </Modal.Footer>
+        {
+          modelOpts.buttons ? (<Modal.Footer>
+            {
+              modelOpts.buttons
+            }
+          </Modal.Footer>) : null
+        }
+
       </Modal>
       {
         data.loadingText ?
-          <div className="dtb-loading">
-            <div class="spinner-grow text-light spinner-grow-sm me-1" role="status">
-              <span class="visually-hidden">Loading...</span>
-            </div>
-            {data.loadingText}
+          <div className={"dtb-loading" + (data.loadingText === 'done' ? ' _done' : '')}>
+            {
+              data.loadingText === 'done' ?
+                <div>Đã cập nhật</div>
+                :
+                <div>
+                  <div className="spinner-grow text-light spinner-grow-sm me-1" role="status">
+                    <span className="visually-hidden"></span>
+                  </div>
+                  {data.loadingText}
+                </div>
+            }
+
           </div> : null
       }
     </div>

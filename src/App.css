@@ -128,3 +128,17 @@ font-size: 12px;
   opacity: .5;
   cursor: not-allowed;
 }
+.dtb-loading._done{
+  background-color: var(--bs-green) ;
+  color: #fff;
+}
+[data-count]:not([data-count="0"])::before{
+content: attr(data-count);
+background-color: var(--bs-red);
+color: #fff;
+font-size: 11px;
+padding: 0 3px;
+border-radius: 3px;;
+display: inline-block;
+vertical-align: super;
+}
