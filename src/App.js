@@ -15,7 +15,7 @@ import ClassicEditor2 from './Common/ClassicEditor2';
 import { Photo } from './Common/Upload';
 import { Select2 } from './Common/Select2';
 import { fe, clone, _2, rawText } from './Common/Helper'
-
+import Editor from "@monaco-editor/react";
 
 function CreateDeep(fn) {
   var x = {
@@ -196,6 +196,10 @@ function Cell(props) {
 var inputIndex = 0;
 
 function Input(props) {
+
+  const [refresh, setRefresh] = useState(false);
+  const [type, setType] = useState(props.type);
+
   var _eq = false;
   function eq(a, b) {
     if (_eq) return false;
@@ -224,9 +228,36 @@ function Input(props) {
   }
   return (
     <div className="form-group mb-3">
-      <label className="mb-1 text-muted" htmlFor={"input--" + i}>{props.label}</label>
+      <label className="mb-1 text-muted d-flex justify-content-between" htmlFor={"input--" + i}>
+        <span>{props.label}</span>
+        {
+          props.type === "monaco" || props.type === "editor" ?
+            <div className="form-check form-switch d-inline-flex align-items-center ms-2">
+              <input className="form-check-input" type="checkbox" id="swtchType" onChange={e => {
+                setType(type === 'monaco' ? 'editor' : 'monaco');
+
+              }} />
+              <label className="form-check-label" htmlFor="swtchType"></label>
+            </div>
+            :
+            null
+        }
+      </label>
       {
-        !eq(props.type, 'editor') ? null : <CKEditor editor={ClassicEditor2} data={props.value} onChange={(o, editor) => { props.onChange && props.onChange(editor.getData()); }} />
+        !eq(type, 'monaco') ? null :
+          <Editor
+            height="30vh"
+            defaultLanguage="html"
+            defaultValue={props.value}
+            onChange={e => {
+              props.onChange && props.onChange(e);
+            }}
+            theme="vs-dark"
+           
+          />
+      }
+      {
+        !eq(type, 'editor') ? null : <CKEditor editor={ClassicEditor2} data={props.value} onChange={(o, editor) => { props.onChange && props.onChange(editor.getData()); }} />
       }
       {
         !eq(props.type, 'text') ? null : <input type="text"  {...ps}></input>
@@ -677,7 +708,7 @@ function App() {
   const [startDeepIndex, setStartDeepIndex] = useState(0);
   const [modelShow, setModelShow] = useState(false);
   const [modelOpts, setModelOpts] = useState({ title: "", buttons: null, body: null });
-  //const [preActiveState, setPreActiveState] = useState({});
+  //const [preActiveState, setPreActiveState] = useState({ });
 
   var crDeep = null;
   function resetActive() {
