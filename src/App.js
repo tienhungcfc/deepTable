@@ -10,7 +10,13 @@ import "react-datetime/css/react-datetime.css";
 import moment from 'moment';
 import 'moment/locale/vi';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+
+import ClassicEditor2 from './Common/ClassicEditor2';
+import { Photo } from './Common/Upload';
+import { Select2 } from './Common/Select2';
+import { fe, clone, _2, rawText } from './Common/Helper'
+
+
 function CreateDeep(fn) {
   var x = {
     title: 'Title 1',
@@ -42,10 +48,11 @@ function CreateDeep(fn) {
         ID: 0
       }
     },
-    noDeep: true,
+    noDeep: false,
     onParent: () => { },
     resizes: {
       //cellName: zise
+      ID: 75
     },
     pgs: {
       total: 0,
@@ -67,7 +74,18 @@ function CreateDeep(fn) {
       { name: "key", value: "", text: "Từ khóa" },
       { name: "from", value: "", type: "datetime", text: "Từ ngày" },
       { name: "to", value: "", type: "datetime", text: "Đến ngày" }
-    ]
+    ],
+    onParentSet(pr, adj) {
+      //tùy biến ở đây khi cài đặt
+
+      // pr 
+      //adj: {name:load, value:filter} | {name:'edit', value: _edit}
+      //gọi trong hàm loadData(),doUpdate()
+
+    },
+    cellRenders: {
+      //cellName: fn
+    }
   };
 
   if (fn) fn(x);
@@ -77,6 +95,7 @@ function CreateDeep(fn) {
 var data = {
   loadingText: '',
   server: '',
+  delay: 500,
   Deeps: [
     CreateDeep(),
     CreateDeep(),
@@ -92,26 +111,19 @@ var data = {
   firstLoad: false
 
 }
-function clone(x) {
-  var z = JSON.parse(JSON.stringify(x));
-  return z;
-}
+
 
 if (window.location.href.indexOf('localhost:3000') > -1)
   Demo(data);
 
-if (window.DeepTableCreator) window.DeepTableCreator(data, { CreateDeep: CreateDeep });
+if (window.top.DeepTableCreator) window.top.DeepTableCreator(data, { CreateDeep: CreateDeep });
 
-var div;
-function rawText(complexText) {
-  if (complexText && typeof (complexText) === 'string' && complexText.indexOf('<') === -1) return complexText;
-  if (!div) {
-    div = document.createElement('div');
-
-  }
-  div.innerHTML = complexText;
-  return div.innerText;
+function ParentInvoke(deep, objToAdj) {
+  var deepIndex = data.Deeps.indexOf(deep);
+  var a = (data.Deeps[deepIndex - 1] || {}).active || {};
+  deep.onParentSet(a, objToAdj)
 }
+
 function getCellWidth(deep, cellName) {
   var w = deep.resizes[cellName];
   if (w) {
@@ -137,11 +149,9 @@ function Cell(props) {
   function render() {
     return props.rawText ? props.rawText :
       props.action ? props.action :
-        (<div className={"text-truncate"}>
-          {
-            rawText(props.text)
-          }
-        </div>)
+        deep.cellRenders[props.cellName] ? deep.cellRenders[props.cellName](props.text) :
+          (<div className={"text-truncate"} dangerouslySetInnerHTML={{ __html: rawText(props.text) }}>
+          </div>)
   }
 
   return (
@@ -172,8 +182,8 @@ function Cell(props) {
 
       {
         deep.noDeep ? null : [
-          props.godeep && !props.isActive ? <i key={0} className="fa fa-action fa-expand" onClick={e => { props.onGoDeep(); }} aria-hidden="true"></i> : null,
-          props.isActive ? <i key={1} className="fa fa-action  fa-compress" onClick={e => { props.onUnActive(); }} aria-hidden="true"></i> : null
+          props.godeep && !props.isActive ? <i key={0} className="fa fa-action fa-expand text-white bg-success" onClick={e => { props.onGoDeep(); }} aria-hidden="true"></i> : null,
+          props.isActive ? <i key={1} className="fa fa-action  fa-compress text-white bg-danger" onClick={e => { props.onUnActive(); }} aria-hidden="true"></i> : null
         ]
       }
 
@@ -182,23 +192,9 @@ function Cell(props) {
   )
 }
 
-function fe(url, opts) {
-  return fetch(url, opts).then(rs => {
-    if (rs.ok) return rs.json(); else throw new Error("Network fail!");
-  }).then(rs => {
-    if (rs.error) throw rs.error;
-    else {
-      return Promise.resolve(rs);
-    }
-  }).catch(e => {
-    alert(e);
-  })
-}
 
 var inputIndex = 0;
-function _2(v) {
-  return v < 10 ? '0' + v : v;
-}
+
 function Input(props) {
   var _eq = false;
   function eq(a, b) {
@@ -212,35 +208,38 @@ function Input(props) {
       var v = '';
       if (e.target) {
         v = e.target.value;
-      } else {
-        if (e instanceof moment) {
-          //console.log('date', e._d);
-          v = _2(e._d.getDate()) + '/' + _2(e._d.getMonth() + 1) + '/' + e._d.getFullYear();
-        }
+      } else if (e instanceof moment) {
+        //console.log('date', e._d);
+        v = _2(e._d.getDate()) + '/' + _2(e._d.getMonth() + 1) + '/' + e._d.getFullYear();
+
+      } else if (typeof e === 'object') {
+        v = e.value;
       }
       props.onChange && props.onChange(v);
-
     },
     value: props.value,
     id: "input--" + i,
-    className: ["datetime","file"].indexOf(props.type) > -1 ? "" : "form-control"
+    className: ["datetime", "file"].indexOf(props.type) > -1 ? "" : "form-control",
+    placeholder: "..."
   }
   return (
     <div className="form-group mb-3">
       <label className="mb-1 text-muted" htmlFor={"input--" + i}>{props.label}</label>
       {
-        !eq(props.type, 'editor') ? null : <CKEditor editor={ClassicEditor} data={props.value} onChange={(o, editor) => { props.onChange && props.onChange(editor.getData()); }} />
+        !eq(props.type, 'editor') ? null : <CKEditor editor={ClassicEditor2} data={props.value} onChange={(o, editor) => { props.onChange && props.onChange(editor.getData()); }} />
       }
       {
         !eq(props.type, 'text') ? null : <input type="text"  {...ps}></input>
       }
       {
-        !eq(props.type, 'file') ? null : <div><input type="file"  {...ps}></input></div>
+        !eq(props.type, 'photo') ? null : <div><Photo server={data.server}   {...ps}></Photo></div>
       }
       {
         !eq(props.type, 'datetime') ? null : <Datetime locale="vi" dateFormat="DD/MM/yyyy" timeFormat={false} {...ps} />
       }
-
+      {
+        !eq(props.type, 'select2') ? null : <Select2 cmd={props.cmd} server={data.server} {...ps} />
+      }
       {
         _eq ? null : <textarea {...ps}></textarea>
       }
@@ -258,38 +257,49 @@ function FormEdit(props) {
 
   function doUpdate() {
     data.loadingText = x.ID ? 'Cập nhật...' : 'Thêm mới...';
+
+    ParentInvoke(deep, { name: 'edit', value: x._edit });
+
     Refresh();
-    fe(data.server + deep.server.update, {
-      method: 'POST',
-      body: JSON.stringify(x._edit)
-    }).then(rs => {
-      // console.log(rs);
-      // alert('');
-      data.loadingText = 'done';
-      Refresh();
-      props.reload && props.reload();
-    })
+    setTimeout(() => {
+      fe(data.server + deep.server.update, {
+        method: 'POST',
+        body: JSON.stringify(x._edit)
+      }).then(rs => {
+        // console.log(rs);
+        // alert('');
+        data.loadingText = 'done';
+        Refresh();
+        props.reload && props.reload();
+      })
+    }, data.delay)
 
   }
   function doDelete() {
     data.loadingText = 'Xóa...';
     Refresh();
-    fe(data.server + deep.server.delete, {
-      method: 'POST',
-      body: JSON.stringify({ ID: x._edit.ID })
-    }).then(rs => {
-      // console.log(rs);
-      // alert('');
-      data.loadingText = 'done';
-      Refresh();
-      props.reload && props.reload();
-    })
+    setTimeout(() => {
+      fe(data.server + deep.server.delete, {
+        method: 'POST',
+        body: JSON.stringify({ ID: x._edit.ID })
+      }).then(rs => {
+        // console.log(rs);
+        // alert('');
+        data.loadingText = 'done';
+        Refresh();
+        props.reload && props.reload();
+      })
+    }, data.delay)
 
   }
   if (!x._edit) {
     x._edit = clone(x);
   }
-  var propsForm = props.inDeep ? deep.edit.propsIndeep : deep.edit.props;
+
+  var propsForm = IsInDeep(deep) ? deep.edit.propsInDeep : deep.edit.props;
+
+  console.log(IsInDeep(deep), deep.edit);
+
   return (
     <div className="dtb-form p-5"
       style={{ top: props.top, height: props.height }}>
@@ -313,7 +323,8 @@ function FormEdit(props) {
                       label: p.text || deep.dictionary[p.name] || p.name,
                       type: p.type
                     }
-                    return <Input key={pIndex} {...ps}></Input>
+
+                    return <Input key={pIndex} {...ps} {...p.inputOpts}></Input>
 
                   })
                 }
@@ -322,7 +333,7 @@ function FormEdit(props) {
 
           </div>
           <div className="px-5 py-3 d-flex justify-content-between">
-            <button className="btn btn-secondary" onClick={e => { props.onCancel() }}>Hủy</button>
+            <button className="btn btn-light" onClick={e => { props.onCancel() }}>Hủy</button>
             {
               deep.edit.action === "delete" ?
                 <button className="btn btn-danger" onClick={e => doDelete()}>Xóa</button> :
@@ -505,16 +516,18 @@ function Deep(props) {
                       {
                         //props
                         cols.map((p, pIndex) => {
+
+
                           return <Cell
                             key={pIndex}
                             deep={deep}
                             text={x[p]}
                             first={pIndex === 0}
-                            godeep={pIndex === 0}
+                            godeep={deep.freeze.indexOf(p) > -1}
                             cellName={p}
                             isActive={deep.active === x}
-                            onGoDeep={e => { deep.active = x; setRefresh(refresh + 1); props.onChange(); }}
-                            onUnActive={e => { deep.active = null; setRefresh(refresh + 1); props.onChange() }}
+                            onGoDeep={e => { deep.active = x; setRefresh(refresh + 1); props.onChange(); props.onGoDeep(deep) }}
+                            onUnActive={e => { deep.active = null; setRefresh(refresh + 1); props.onChange(); }}
 
                           >
 
@@ -571,6 +584,10 @@ function Deep(props) {
   )
 }
 
+function IsInDeep(deep) {
+  var i = data.Deeps.indexOf(deep);
+  return i != _startDeepIndex;
+}
 
 function PagingSetting(props) {
   const [ps, setPs] = useState(props.ps);
@@ -589,11 +606,12 @@ function PagingSetting(props) {
           })
         }
       </div>
+      <hr />
       <div className="form-group">
         <label className="mb-1 text-muted">Số dòng trên một trang</label>
         <div className="input-group">
           <input className="form-control" type="number" value={ps} onChange={e => { setPs(parseInt(e.target.value)) }}></input>
-          <button className="btn btn-light" onClick={e => { props.onPsChange && props.onPsChange(ps) }}>Thay đổi</button>
+          <button className="btn btn-success" onClick={e => { props.onPsChange && props.onPsChange(ps) }}>Thay đổi</button>
         </div>
 
       </div>
@@ -603,7 +621,7 @@ function PagingSetting(props) {
 
 function RenderFilter(props) {
   var deep = props.deep;
-  var inDeep = props.inDeep;
+  var inDeep = IsInDeep(deep);
   var ft = inDeep ? deep.filterInDeep : deep.filter;
 
   if (!deep.resetFilter) {
@@ -630,7 +648,7 @@ function RenderFilter(props) {
             label: p.text || deep.dictionary[p.name] || p.name,
             type: p.type
           }
-          return <Input key={pIndex} {...ps}></Input>
+          return <Input key={pIndex} {...ps} {...p.inputOpts}></Input>
         })
       }
       <div className="d-flex flex-row-reverse">
@@ -650,7 +668,8 @@ function RenderFilter(props) {
 }
 
 var Refresh;
-
+var _startDeepIndex = -1;
+var preActiveState = {};
 function App() {
 
   var $el = useRef();
@@ -658,7 +677,7 @@ function App() {
   const [startDeepIndex, setStartDeepIndex] = useState(0);
   const [modelShow, setModelShow] = useState(false);
   const [modelOpts, setModelOpts] = useState({ title: "", buttons: null, body: null });
-
+  //const [preActiveState, setPreActiveState] = useState({});
 
   var crDeep = null;
   function resetActive() {
@@ -675,31 +694,40 @@ function App() {
     if (pi) deep.pgs.pi = pi;
     setRefresh(refresh + 1);
     var filter = {};
-
-    var inDeep = data.Deeps.indexOf(deep) !== startDeepIndex;
+    var deepIndex = data.Deeps.indexOf(deep);
+    var inDeep = deepIndex !== startDeepIndex;
     deep[inDeep ? "filterInDeep" : "filter"].forEach(function (f) {
       filter[f.name] = f.value
     })
+    filter._indeep = inDeep ? 1 : 0;
+    if (inDeep) {
 
-    fe(data.server + deep.server.get, {
-      method: 'POST',
-      body: JSON.stringify({
-        filter: filter,
-        pi: deep.pgs.pi,
-        ps: deep.pgs.ps,
+      ParentInvoke(deep, { name: 'load', value: filter })
+    }
+    setTimeout(() => {
+
+      fe(data.server + deep.server.get, {
+        method: 'POST',
+        body: JSON.stringify({
+          filter: filter,
+          pi: deep.pgs.pi,
+          ps: deep.pgs.ps,
+        })
+      }).then(rs => {
+        //console.log('rs',rs);
+        data.loadingText = '';
+        deep.items = rs.data;
+        deep.pgs.pi = rs.other.pi;
+        deep.pgs.ps = rs.other.ps;
+        deep.pgs.pcount = rs.other.pcount;
+        deep.pgs.total = rs.other.total;
+
+        Refresh();
+
       })
-    }).then(rs => {
-      //console.log('rs',rs);
-      data.loadingText = '';
-      deep.items = rs.data;
-      deep.pgs.pi = rs.other.pi;
-      deep.pgs.ps = rs.other.ps;
-      deep.pgs.pcount = rs.other.pcount;
-      deep.pgs.total = rs.other.total;
+    }, data.delay)
 
-      Refresh();
 
-    })
 
 
   }
@@ -756,15 +784,15 @@ function App() {
 
 
   useEffect(() => {
-    if (!data.firstLoad) {
-      data.firstLoad = true;
-      loadData(data.Deeps[0], 1);
+    if (_startDeepIndex != startDeepIndex) {
+      _startDeepIndex = startDeepIndex;
+      loadData(crDeep, 1);
     }
   })
 
   function countFilter() {
     var count = 0;
-    var inDeep = data.Deeps.indexOf(crDeep) !== startDeepIndex;
+    var inDeep = IsInDeep(crDeep);
     var n = inDeep ? 'filterInDeep' : 'filter';
     if (crDeep.resetFilter) {
       crDeep.resetFilter[n].forEach(function (f1) {
@@ -816,6 +844,7 @@ function App() {
                 Hiện thị {crDeep.pgs.ps * (crDeep.pgs.pi - 1) + 1} - {crDeep.pgs.ps * (crDeep.pgs.pi - 1) + crDeep.items.length} dòng/ Tổng:{crDeep.pgs.total}.
               </span>
               <span className="d-flex dtb-pgs-nav ms-3 btn-group btn-group-sm" >
+                <button className="btn btn-sm btn-light" onClick={e => loadData(crDeep)}><i className="fa fa-refresh" aria-hidden="true"></i></button>
                 <button className="btn btn-sm btn-light" disabled={crDeep.pgs.pi === 1} onClick={e => goNav(-1)}><i className="fa fa-angle-left" aria-hidden="true"></i></button>
                 <button className="btn btn-sm btn-light" onClick={e => showPgs()}><i className="fa fa-ellipsis-h" aria-hidden="true"></i></button>
                 <button className="btn btn-sm btn-light" disabled={crDeep.pgs.pi === crDeep.pgs.pcount} onClick={e => goNav(1)}><i className="fa fa-angle-right" aria-hidden="true"></i></button>
@@ -838,6 +867,10 @@ function App() {
                       key={dIndex}
                       up={data.Deeps[dIndex - 1]}
                       onChange={e => { setRefresh(refresh + 1) }}
+                      onGoDeep={deep => {
+                        var i = data.Deeps.indexOf(deep);
+                        loadData(data.Deeps[i + 1], 1);
+                      }}
                       reload={e => {
                         loadData(d, 1)
                       }}
@@ -892,5 +925,8 @@ function App() {
 
   );
 }
+
+
+
 
 export default App;
