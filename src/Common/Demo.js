@@ -1,12 +1,13 @@
 function clone(x) {
     var z = JSON.parse(JSON.stringify(x));
     return z;
-  }
+}
 
 function Demo(data) {
     data.delay = 250;
     //server
-    data.server = 'http://localhost:3571';
+    //data.server = 'http://localhost:3571';
+    data.server = 'http://localhost:88';
     //courde
     data.Deeps[0].title = 'Khóa học';
     //Cột hiện thị theo đúng thứ tự
@@ -35,7 +36,7 @@ function Demo(data) {
         //{name, text[option], type[option: mặc định textarea]}
         { name: "Title" },
         { name: "VideoLink", type: "text" },
-        { name: "CertHtml", type: 'editor' },
+        { name: "CertHtml", type: 'ckeditor' },
         { name: "BgImage", type: "photo" },
     ];
     //chế độ đơn lẻ
@@ -68,7 +69,7 @@ function Demo(data) {
         }
     }
     let b = [
-        
+
         { name: "Title" },
         { name: "MedalHtml", },
         { name: "ActivityHtml" },
@@ -77,7 +78,7 @@ function Demo(data) {
 
     data.Deeps[1].filter.push({ name: 'CourseID', type: 'select2', inputOpts: { cmd: "course" } });
     data.Deeps[1].edit.props = b;
-    data.Deeps[1].edit.propsInDeep = clone( b);
+    data.Deeps[1].edit.propsInDeep = clone(b);
 
     data.Deeps[1].edit.props.push({ name: "CourseID", type: "select2", inputOpts: { cmd: "course" } });
 
@@ -91,7 +92,9 @@ function Demo(data) {
                 adj.value.CourseID = pr.ID;
                 break;
             case 'load':
-                adj.value.CourseID= 'sql://non;='+ pr.ID;
+                adj.value.CourseID = 'sql://non;=' + pr.ID;
+                break;
+            default:
                 break;
         }
     }
@@ -122,7 +125,7 @@ function Demo(data) {
         }
     }
     let c = [
-        
+
         { name: "Title" },
         { name: "MaxPoint", },
         { name: "SrcMobile" },
@@ -144,7 +147,9 @@ function Demo(data) {
                 adj.value.LessonID = pr.ID;
                 break;
             case 'load':
-                adj.value.LessonID= 'sql://non;='+ pr.ID;
+                adj.value.LessonID = 'sql://non;=' + pr.ID;
+                break;
+            default:
                 break;
         }
     }

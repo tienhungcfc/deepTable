@@ -106,7 +106,11 @@ var data = {
     ScrollbarWidth: getScrollbarWidth(),
     contentHeight: 0.8 * window.innerHeight,
     cellHeight: 36,
-    cellWidth: 250
+    cellWidth: 250,
+    fullInput:{
+      head: "0 0 32px",
+      monacoHeight: "calc(100vh - 64px)"
+    }
   },
   firstLoad: false
 
@@ -195,9 +199,12 @@ function Cell(props) {
 
 var inputIndex = 0;
 
+
+
+
 function Input(props) {
 
-  const [refresh, setRefresh] = useState(false);
+
   const [type, setType] = useState(props.type);
 
   var _eq = false;
@@ -231,13 +238,22 @@ function Input(props) {
       <label className="mb-1 text-muted d-flex justify-content-between" htmlFor={"input--" + i}>
         <span>{props.label}</span>
         {
-          props.type === "monaco" || props.type === "editor" ?
-            <div className="form-check form-switch d-inline-flex align-items-center ms-2">
-              <input className="form-check-input" type="checkbox" id="swtchType" onChange={e => {
-                setType(type === 'monaco' ? 'editor' : 'monaco');
-
-              }} />
-              <label className="form-check-label" htmlFor="swtchType"></label>
+          props.type === "monaco" || props.type === "ckeditor" ?
+            <div>
+              <div title="Chuyển đổi giữa bộ soạn thảo và mã nhúng" className="form-check form-switch d-inline-flex align-items-center  align-middle" style={{ minHeight: 0 }}>
+                <input className="form-check-input" type="checkbox" id="swtchType" onChange={e => {
+                  setType(type === 'monaco' ? 'editor' : 'monaco');
+                }} />
+                <label className="form-check-label" htmlFor="swtchType"></label>
+              </div>
+              <span title="Mở rộng"
+                className=" p-1 bg-dark-gray align-middle"
+                onClick={e => {
+                  SetInputFullScreen({ type: type, value: props.value, callback: (v) => { props.onChange && props.onChange(v); } })
+                }}
+              >
+                <i class="fa fa-expand" aria-hidden="true"></i>
+              </span>
             </div>
             :
             null
@@ -253,17 +269,17 @@ function Input(props) {
               props.onChange && props.onChange(e);
             }}
             theme="vs-dark"
-           
+
           />
       }
       {
-        !eq(type, 'editor') ? null : <CKEditor editor={ClassicEditor2} data={props.value} onChange={(o, editor) => { props.onChange && props.onChange(editor.getData()); }} />
+        !eq(type, 'ckeditor') ? null : <CKEditor editor={ClassicEditor2} data={props.value} onChange={(o, editor) => { props.onChange && props.onChange(editor.getData()); }} />
       }
       {
         !eq(props.type, 'text') ? null : <input type="text"  {...ps}></input>
       }
       {
-        !eq(props.type, 'photo') ? null : <div><Photo server={data.server}   {...ps}></Photo></div>
+        !eq(props.type, 'photo') ? null : <div><Photo server={data.server} prefix={props.presentText}  {...ps}></Photo></div>
       }
       {
         !eq(props.type, 'datetime') ? null : <Datetime locale="vi" dateFormat="DD/MM/yyyy" timeFormat={false} {...ps} />
@@ -329,7 +345,6 @@ function FormEdit(props) {
 
   var propsForm = IsInDeep(deep) ? deep.edit.propsInDeep : deep.edit.props;
 
-  console.log(IsInDeep(deep), deep.edit);
 
   return (
     <div className="dtb-form p-5"
@@ -339,7 +354,7 @@ function FormEdit(props) {
           <div className="px-5 py-3">
             <h4 className="m-0">{deep.edit.title}</h4>
           </div>
-          <div className="px-5" style={{ overflow: 'hidden', maxHeight: 'calc(100% - 120px)' }}>
+          <div className="px-5 form-body" style={{ overflow: 'hidden', height: props.height - 240 }}>
             <PerfectScrollbar>
               <div>
                 {
@@ -355,7 +370,7 @@ function FormEdit(props) {
                       type: p.type
                     }
 
-                    return <Input key={pIndex} {...ps} {...p.inputOpts}></Input>
+                    return <Input presentText={x._edit.Title} key={pIndex} {...ps} {...p.inputOpts}></Input>
 
                   })
                 }
@@ -487,7 +502,7 @@ function Deep(props) {
               cellName={"--"}
               action={
                 <button
-                  className="btn btn-light btn-sm py-0"
+                  className="btn btn-success btn-sm py-0"
                   onClick={e => { addNew() }}
                 >
                   {"+" + (deep.dictionary[deep.freeze[0]] || "")}</button>
@@ -617,7 +632,7 @@ function Deep(props) {
 
 function IsInDeep(deep) {
   var i = data.Deeps.indexOf(deep);
-  return i != _startDeepIndex;
+  return i !== _startDeepIndex;
 }
 
 function PagingSetting(props) {
@@ -700,7 +715,7 @@ function RenderFilter(props) {
 
 var Refresh;
 var _startDeepIndex = -1;
-var preActiveState = {};
+var SetInputFullScreen;
 function App() {
 
   var $el = useRef();
@@ -708,6 +723,7 @@ function App() {
   const [startDeepIndex, setStartDeepIndex] = useState(0);
   const [modelShow, setModelShow] = useState(false);
   const [modelOpts, setModelOpts] = useState({ title: "", buttons: null, body: null });
+  const [inputFull, setInputFull] = useState({ type: '', value: '', callback: null, show: false });
   //const [preActiveState, setPreActiveState] = useState({ });
 
   var crDeep = null;
@@ -718,6 +734,14 @@ function App() {
   }
 
   Refresh = (v) => {
+    setRefresh(refresh + 1);
+  }
+  SetInputFullScreen = (opt) => {
+    for (var k in inputFull) {
+      if (opt[k]) inputFull[k] = opt[k];
+    }
+    inputFull.show = true;
+    setInputFull(inputFull);
     setRefresh(refresh + 1);
   }
   function loadData(deep, pi) {
@@ -815,7 +839,7 @@ function App() {
 
 
   useEffect(() => {
-    if (_startDeepIndex != startDeepIndex) {
+    if (_startDeepIndex !== startDeepIndex) {
       _startDeepIndex = startDeepIndex;
       loadData(crDeep, 1);
     }
@@ -835,6 +859,49 @@ function App() {
       })
     }
     return count;
+  }
+
+
+  if (inputFull.show) {
+    return (
+      <div className="d-flex h-100 w-100 flex-column">
+        <div className="d-flex flex-row-reverse align-items-center" style={{ flex: data.Env.fullInput.head }}>
+          <span title="Thu nhỏ" className="btn btn-sm btn-light mx-2" onClick={e => {
+            inputFull.show = false;
+            if(inputFull.callback) inputFull.callback(inputFull.value);
+            setInputFull(inputFull);
+            setRefresh(refresh + 1);
+          }}>
+            <i class="fa fa-compress" aria-hidden="true"></i>
+          </span>
+        </div>
+        <div className="flex-grow-1">
+          <div className="h-100 overflow-hidden position-relative">
+            <PerfectScrollbar>
+              {
+                //ckeditor
+                inputFull.type !== "ckeditor" ? null :
+                  <CKEditor editor={ClassicEditor2} data={inputFull.value} onChange={(o, editor) => { inputFull.value= editor.getData() }} />
+              }
+              {
+                //monaco editor
+                inputFull.type !== "monaco" ? null :
+                  <Editor
+                    height= { data.Env.fullInput.monacoHeight}
+                    defaultLanguage="html"
+                    defaultValue={inputFull.value}
+                    onChange={e => {
+                      inputFull.value =  e;
+                    }}
+                    theme="vs-dark"
+
+                  />
+              }
+            </PerfectScrollbar>
+          </div>
+        </div>
+      </div>
+    );
   }
   return (
     <div

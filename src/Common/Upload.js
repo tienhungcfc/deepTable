@@ -1,4 +1,4 @@
-import {  useState } from "react"
+import { useState } from "react"
 
 function Photo(props) {
 
@@ -16,7 +16,7 @@ function Photo(props) {
         const formData = new FormData();
         formData.append('file', files[0]);
         setLoading(true);
-        fetch(api, {
+        fetch(api + "&prefix=" + (props.prefix || "upload"), {
             method: 'POST',
             body: formData
         })
